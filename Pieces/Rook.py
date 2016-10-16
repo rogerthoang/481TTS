@@ -119,7 +119,7 @@ class Rook:
 			tn = Knight(self._board, not self._player, their_knight)
 			#piece = tn.knight_movement()
 			
-			if tk.king_movement().count("R") == 1:
+			if tn.knight_movement().count("R") == 1:
 				return False
 		
 		return True

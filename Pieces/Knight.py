@@ -54,20 +54,16 @@ class Knight:
 		if not self._player:
 			their_knight = self._board.generic_find("n")
 			their_king = self._board.generic_find("k")
-			
 			if their_knight:
-			
 				knight_piece = Knight(self._board, not self._player, their_knight)
 
-				what_piece = knight_piece.knight_movement()
-				if what_piece == "N":
+				if knight_piece.knight_movement().count("N") == 1:
 					return False
 			
 			if their_king:
 				from Pieces.King import King
 				king_piece = King(self._board, not self._player, their_king)
-				what_piece = king_piece.king_movement()
-				if what_piece == "N":
+				if king_piece.king_movement().count("N") == 1:
 					return False
 			
 			return True
@@ -80,21 +76,21 @@ class Knight:
 			if max_knight:
 				knight_piece = Knight(self._board, not self._player, max_knight)
 				what_piece = knight_piece.knight_movement()
-				if what_piece == "N":
+				if knight_piece.knight_movement().count("N") == 1:
 					return False
 			
 			if max_king:
 				from Pieces.King import King
 				king_piece = King(self._board, not self._player, max_king)
 				what_piece = king_piece.king_movement()
-				if what_piece == "N":
+				if king_piece.king_movement().count("N") == 1:
 					return False
 			
 			if max_rook:
 				from Pieces.Rook import Rook
 				rook_piece = Rook(self._board, not self._player, max_rook)
 				what_piece = rook_piece.rook_piece_check()
-				if what_piece == "N":
+				if rook_piece.rook_piece_check().count("N") == 1:
 					return False
 			
 			return True

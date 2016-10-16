@@ -27,6 +27,7 @@ def heuristicX(position, player):
 	rook_index = position.generic_find("R")
 	knight_index = position.generic_find("N")
 	t_king_index = position.generic_find("k")
+	t_knight_index = position.generic_find("n")
 	#print_pos(position)
 
 	if king_index:
@@ -38,26 +39,62 @@ def heuristicX(position, player):
 		#what_piece = rook.rook_piece_check()
 	
 	if knight_index:
-		knight = Knight(position, not player, knight_index)
+		knight = Knight(position, player, knight_index)
 	
-	only_king, their_king = position.only_king()
+	if t_king_index:
+		their_king = King(position, not player, t_king_index)
+		
+	if t_knight_index:
+		their_knight = Knight(position, not player, t_knight_index)
+	
+	#only_king, their_king = position.only_king()
 
 	#if an opponent piece can be eliminated do it
-	if position.check_board() and king.king_safety():
-		return 99999
+	#if position.check_board() and king.king_safety():
+	#	return 99999
 
 	if not king.king_safety():
 		return -1000
+	#print(player)
+	#print(rook.rook_safety(), their_knight.knight_movement(), their_knight.knight_movement().count("R") == 1)
+	#print(their_knight.knight_movement().count("R") == 1)
+	
+	if not rook.rook_safety() and their_knight.knight_movement().count("R") == 1:
+		return -5
 	
 	if not rook.rook_safety() and king.king_movement().count("R") != 1:
 		return -5
 	
 	
-	if king.increase_movement(rook_index) and king_index // 10 != rook_index // 10\
-	and king_index // 10 > rook_index // 10:
+	
+	if not knight.knight_safety():
+		return -1
+	
+	
+	
+	if rook.check_king_space(6):
+		return 100 + (100 - abs(knight_index // 10 - t_king_index // 10))
+	
+	if king.increase_movement(t_king_index) and t_king_index // 10 == 2 or t_king_index % 10 == 8:
+		return 40 + rook.trap_king()
+	
+	if rook_index // 10 > king_index // 10 and king.increase_movement(t_king_index):
+		return 122
+	
+	if their_king.increase_movement(rook_index) and king.increase_movement(t_king_index):
+		return 111
+	
+	if king.king_movement().count("R") == 1 :
+		return rook.trap_king() + (9 - abs((rook_index // 10 - t_king_index// 10) + abs(9 - (king_index - t_king_index) )) )
+	
+
+	if king.increase_movement(rook_index) and rook_index // 10 != 9\
+	and rook_index % 10 < t_king_index % 10:
 		return 20
 	
-	if rook_index // 10 == 8:
+	
+	if rook_index // 10 == 7 and king_index // 10 == 9\
+	and knight_index // 10 == 9:
 		return 10
 	
 		
