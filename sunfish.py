@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-import re, sys, time
+import re, sys, time, os
 from itertools import count
 from collections import OrderedDict, namedtuple
 from MiniMax.minimax import *
