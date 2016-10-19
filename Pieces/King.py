@@ -1,8 +1,6 @@
-from sunfish import print_pos
 class King:
-	def __init__(self, board, player, end):
+	def __init__(self, board, end):
 		self._board = board
-		self._player = player
 		self._position = end
 		self._kings_moves = []
 		
@@ -23,93 +21,43 @@ class King:
 		#A king can only move in any direction by one
 		self.populate_moves()
 		
-		#if maximize player, look for minimize pieces
-		if not self._player:
-			#print(kings_moves)
-			for i in self._kings_moves:
-				if self._board.get_board_piece(i) != "." and self._board.get_board_piece(i) != " " \
-				and self._board.get_board_piece(i) != "\n" and self._board.get_board_piece(i) != "K" \
-				and self._board.get_board_piece(i) != "N" and self._board.get_board_piece(i) != "R":
+		for i in self._kings_moves:
+			if self._board.get_board_piece(i) != "." and self._board.get_board_piece(i) != " " \
+			and self._board.get_board_piece(i) != "\n":
 					board_piece_list.append(self._board.get_board_piece(i))
-					
-			if len(board_piece_list) > 0:
-				return board_piece_list
-					
 		
-			else:
-				return []
-		
-		#otherwise, look for maximize player's pieces
+		if len(board_piece_list) > 0:
+			return board_piece_list
+					
 		else:
-			for i in self._kings_moves:
-				if self._board.get_board_piece(i) != "." and self._board.get_board_piece(i) != " " \
-				and self._board.get_board_piece(i) != "\n" and self._board.get_board_piece(i) != "k" \
-				and self._board.get_board_piece(i) != "n" and self._board.get_board_piece(i) != "r":
-					board_piece_list.append(self._board.get_board_piece(i))
-							
-			if len(board_piece_list) > 0:
-				return board_piece_list
-					
-		
-			else:
-				return []
-		
+			return []
+
 		#if no one is close, return None
 		return None	
 	
 	#Check to see if king is safe from all possible moves your opponent can make
 	def king_safety(self):
 		your_king = self._board.generic_find("K")
+		rook = self._board.generic_find("r")
 
-		#MAXIMIZE
-		if your_king is not None and not self._player:
-			knight = self._board.generic_find("n")
-			
-			king = self._board.generic_find("k")
-	
-			if king:
-				their_king = King(self._board, not self._player, king)
-				#piece = their_king.king_movement()
-				#print(piece) 
-				if their_king.king_movement().count("K") == 1:
-					return False
-		
-			if knight:
-				their_knight = Knight(self._board, not self._player, knight)
-				if their_knight.knight_movement().count("K") == 1:
-					return False
-		
-			return True
+		if rook:
+			from .Rook import Rook
+			their_rook = Rook(self._board, rook)
+			if their_rook.rook_piece_check().count("K") == 1:
+				return False
 
-		#MINIMIZE
-		else:
-			rook = self._board.generic_find("r")
-			#print("CHECKING")
-			if rook:
-				from .Rook import Rook
-				their_rook = Rook(self._board, self._player, rook)
-				#piece = their_rook.rook_piece_check()
-				
-				
-				
-				if their_rook.rook_piece_check().count("K") == 1:
-					return False
+		knight = self._board.generic_find("n")
+		if knight:
+			from .Knight import Knight
+			their_knight = Knight(self._board, knight)
+			if their_knight.knight_movement().count("K") == 1:
+				return False
 
-			knight = self._board.generic_find("n")
-			if knight:
-				from .Knight import Knight
-				their_knight = Knight(self._board, self._player, knight)
-				#piece = their_knight.knight_movement()
-				if their_knight.knight_movement().count("K") == 1:
-					return False
-
-			king = self._board.generic_find("k")
-			if king:
-				their_king = King(self._board, self._player, king)
-				#piece = their_king.king_movement()
-
-				if their_king.king_movement().count("K") == 1:
-					return False   
+		king = self._board.generic_find("k")
+		if king:
+			their_king = King(self._board, king)
+			if their_king.king_movement().count("K") == 1:
+				return False   
 
 		return True
 	
@@ -124,7 +72,6 @@ class King:
 	
 	#create a 2-radii movement block around the king to check if the rook is there
 	def increase_movement(self, your_rook):
-		#your_rook = self._board.generic_find("R")
 		extended_list = [self._position - 18, self._position - 19, self._position - 20, self._position - 21, self._position - 22,
                          self._position - 8, self._position - 12, 
                          self._position - 2, self._position + 2,
@@ -173,3 +120,50 @@ class King:
 			
 		else:
 			return []
+		
+	#False is lower, True is upper
+	def check_mated(self, king, knight, rook):
+		viable_move_list = []
+		limit = 0
+
+		self.populate_moves()
+		
+		for position in self._kings_moves:
+			if position // 10 > 1 and position // 10 < 10\
+			and position % 10 > 0 and position % 10 < 9:
+				viable_move_list.append(position)
+		
+		viable_move_list.append(self._position)
+		
+		if king:
+			king.populate_moves()
+			king_moves = king.ret_kings_moves()
+			for position in king_moves:
+				if viable_move_list.count(position) == 1:
+					viable_move_list.pop(viable_move_list.index(position))
+					
+		if knight:
+			knight.populate_moves()
+			knight_moves = knight.ret_moves()
+			for position in knight_moves:
+				if viable_move_list.count(position) == 1:
+					viable_move_list.pop(viable_move_list.index(position))
+					
+		if rook:
+			rook_moves = []
+			hori_lower, hori_upper = rook.rook_hori_movement()
+			vert_lower, vert_upper = rook.rook_vert_movement()
+			for num in range(hori_lower, hori_upper + 1):
+				rook_moves.append(num)
+				
+			for num in range(vert_lower, vert_upper + 1, 10):
+				rook_moves.append(num)
+				
+			for position in rook_moves:
+				if viable_move_list.count(position) == 1:
+					viable_move_list.pop(viable_move_list.index(position))
+
+		if len(viable_move_list) == 0:
+			return True
+		else:
+			return False		

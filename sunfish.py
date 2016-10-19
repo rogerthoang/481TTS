@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-import re, sys, time, os
+import re, sys, time
 from itertools import count
 from collections import OrderedDict, namedtuple
 from MiniMax.minimax import *
@@ -244,6 +244,19 @@ class Position(namedtuple('Position', 'board score wc bc ep kp')):
     def get_board_piece(self, i):
         return self.board[i]
 	
+    def find_board_piece(self, piece):
+        count = 0
+        try:
+            for position in range(21, 99):
+                #print(self.board[position], piece)
+                if self.board[position] == piece:
+                    return position
+                
+            return None
+            
+        except:
+            pass
+    
     def is_checkmate(self):
         if self.score <= -MATE_LOWER:
             return True
@@ -299,7 +312,7 @@ class Position(namedtuple('Position', 'board score wc bc ep kp')):
     #Pair the king and rook together in order to trap the opponent
     def pair_two_piece(self, first_piece, second_piece):
 
-        if abs(first_piece / 10 - second_piece / 10) < 2:
+        if abs(first_piece / 10 - second_piece / 10) < 3:
             return True
         
         return False
@@ -541,116 +554,208 @@ def print_pos(pos):
         print(' ', 8-i, ' '.join(uni_pieces.get(p, p) for p in row))
     print('    a b c d e f g h \n\n')
 
+#save player X's move to log
+def save_X(pos, move, text_count):
+    log_move = "X:{}:{}".format(pos.get_board_piece(move[0]), render(move[1]))
+    test = render(move[1])
+ 
+    with open("log_X.txt", "a") as log_X:
+        log_X.write(str(text_count) + " " + log_move + "\n")
 
-def change_board(new_board, old_board, first_player):
-    move_tuple = ()
-    old_board_position = _cb(old_board, first_player)
-    new_board_position = _cb(new_board, first_player)
-    
-    for k,v in old_board_position.items():
-        try:
-            if old_board_position[k] != new_board_position[k]:
-                move_tuple += ((old_board_position[k], new_board_position[k]),)
-        except:
-            pass
-             
-    return move_tuple
-            
-def _cb(board, first_player):
-    dict = {}
-    
-    try:
-        if first_player:
-            counter = 0
-            for piece in board:
-                for p in piece: 
-                    if p == "K" or p == "R" or p == "N":
-                        dict[p] = counter
-                    counter += 1
-        else:
-            counter = 0
-  
-            for piece in board:
-                for p in piece:
-                    #print(p)
-                    if p == "K" or p == "N":
-                        dict[p] = counter
-                    counter += 1
-    except:
-        pass
-    
-    return dict
+#Player Y reads player X's move and saves it to their log
+#It also makes the move that it read from player X
+#returns the position after moving player X and text count
+def read_X(pos, text_count):
+    with open("log_X.txt", "r") as log_X:
+        for i in range(0, text_count):
+            info = log_X.readline()
 
-def grab_tuple(tuple):
-    move_list = []
-    for vals in tuple:
-        for val in vals:
-            move_list.append(val)
-            
-    return move_list[0], move_list[1]
-
-def main():
-    pos = Position(initial, 0, (True,True), (True,True), 0, 0)
-    searcher = Searcher()
-    
-    #print initial board
-    print_pos(pos)
-    
-    #Continue until someone loses
-    while True:
-        max_player = True
+        #find the semicolons that seperate the needed elements
+        first_semi = info.find(":")
+        second_semi = info.find(":", first_semi +1)
         
-        #Max player's move
-		
-        #given the current position, a depth, whos turn and checkmate, try to use minimax
-        score, move = minimax(pos, 1, True, max_player)
-        print(score, move)
-        if score == 99999:
-            config.TOTAL_PIECE -= 1
+        #gather the piece and index of the move
+        piece = info[first_semi + 1:second_semi].strip()
+        position = info[second_semi + 1:].strip()
         
+        #get the index of the piece and revert the chess move to an index and make a tuple
+        start_index = pos.find_board_piece(piece)
+        end_index = parse(position)
+        read_move = (start_index, end_index)
+        
+        #make the move using the tuple
+        pos = pos.move(read_move)
+        
+        #Save player X's move into player Y's log
+        with open("log_Y.txt", "a") as log_Y:
+            log_move = "X:{}:{}".format(piece, position)
+            log_Y.write(str(text_count) + " " + log_move + "\n")
+    
+    text_count += 1
+    
+    return pos, text_count
+        
+#Player X reads player Y's move and saves it to their log
+#It also makes the move that it read from player Y
+#returns the position after moving player Y and the log counter
+def read_Y(pos, text_count):
+    with open("log_Y.txt", "r") as log_Y:
+        for i in range(0, text_count):
+            info = log_Y.readline()
+        
+        #rotate the board to make the proper move
+        pos = pos.rotate()
+        
+        #find the semicolons that seperate the needed elements
+        first_semi = info.find(":")
+        second_semi = info.find(":", first_semi +1)
+        
+        #gather the information
+        piece = info[first_semi + 1:second_semi].strip()
+        position = info[second_semi + 1:].strip()
+        
+        #turn the chess piece into an index and reverse the index to get a tuple
+        start_index = pos.find_board_piece(piece)
+        end_index = 119 - parse(position)
+        read_move = (start_index, end_index)
+        
+        #make the move and rotate the board back
+        pos = pos.move(read_move)
+        pos = pos.rotate()
+        
+        
+        #save the player Y's move into player X's log
+        with open("log_X.txt", "a") as log_X:
+            log_move = "Y:{}:{}".format(piece, position)
+            log_X.write(str(text_count) + " " + log_move + "\n")
+    
+    text_count += 1
+            
+    return pos, text_count
 
+#function used to save Y's move to their log
+def save_Y(pos, move, text_count):
+    log_move = "Y:{}:{}".format(pos.get_board_piece(move[0]), render(119-move[1]))
+          
+    with open("log_Y.txt", "a") as log_Y:
+        log_Y.write(str(text_count) + " " + log_move + "\n")
+
+#function used to make the move, save the move to log and print the move
+#pos = position of the board
+#who = bool, True = max, False = min
+#move = the move the minimax function returned
+#text_count = counter the log file are using
+#returns the new position after making the move
+def showMove(pos, who, move, text_count):
+    player = who
+    
+    #if max player
+    if player:
+        #save player X's move
+        save_X(pos, move, text_count)
+        
+        #make the actual move
         pos = pos.move(move)
-        if pos.score <= -MATE_LOWER:
-            print("PLAYER Y has won!")
-            break
-
-        move = render(move[0]) + render(move[1])
-        print("PLAYER X: {}".format(move))
         
+        #render the move and print it
+        move_render = render(move[0]) + render(move[1])
+        print("PLAYER X: {}".format(move_render))
+        
+        #print the board
+        print_pos(pos)
+   
+    #if min player
+    else:
+        #save player Y's move
+        save_Y(pos, move, text_count)
+        
+        #make the actual move
+        pos = pos.move(move)
+        
+        #render the move and print it
+        move_render = render(119-move[0]) + render(119-move[1])
+        print("PLAYER Y: {}".format(move_render))
+
+        #rotate the board back and print it
+        pos = pos.rotate()
         print_pos(pos)
         
+    return pos
+   
+#driver function to play the game
+#pos = position of the board
+#who = bool, True = max player, False = min player
+#text_count = counter for logs
+#returns the position after the move of the player, false for game not ended and the log counter
+def play(pos, who, text_count):
+    player = who
+
+    if player:
+        #Max player's move
+        if text_count > 1:
+            pos, text_count = read_Y(pos, text_count)
+
+        #given the current position, a depth, whos turn and checkmate, try to use minimax
+        score, move = minimax(pos, 1, True, player)
+
+        if score == 99999:
+            config.TOTAL_PIECE -= 1
+
+        #engine check for player win    
+        if pos.score <= -MATE_LOWER:
+            print("PLAYER Y has won!")
+            return True
+
+        #call to make a move, save and show the move
+        pos = showMove(pos, True, move, text_count)
+        
+        text_count += 1
+        
+    else:
         #Minimizing PLAYER MOVE
-        max_player = False
-       
+        pos, text_count = read_X(pos, text_count)
+    
         #rotate board for library to work properly
         pos = pos.rotate()
-         
-        score, move = minimax(pos, 1, False, max_player)
-        #print(score, move)
+        
+        #call minimax to determine the move
+        score, move = minimax(pos, 1, False, player)
+
         if score == -1001:
             config.TOTAL_PIECE -= 1
             
-		#This library's check for checkmate.  Should replace later on by checking if the king has been eliminated
+		#This engine's check for player win
         if pos.score <= -MATE_LOWER:
             print("Player X has won!")
-            break
-        
-		#search for differences between the old board and move returned by minimax and return a tuple
-        #move_tuple = change_board(move, pos, max_player)
-        
-        #with tuple update board
-        #for move in move_tuple:
-        pos = pos.move(move)
-        
-        #grab values and convert to readable string
-        #left_val, right_val = grab_tuple(move_tuple)
-        
-        move = render(119-move[0]) + render(119-move[1])
-        print("PLAYER Y: {}".format(move))
+            return True
 
-        pos = pos.rotate()
-        print_pos(pos)
+        #call to make a move, save and show the move
+        pos = showMove(pos, False, move, text_count)
+        
+        text_count += 1
+        
+    return pos, False, text_count
 
+def main():
+    #initialize the various variables needed
+    #count = how many rounds have passed, only increments after both player's have made a move
+    #log_counters = counters used to represent the count in log_X and log_Y
+    #end = bool used to determine if game has ended
+    #pos' = initialize the board for both players
+    count = 1
+    x_log_counter = 1
+    y_log_counter = 1
+    end = False
+    
+    pos_X = Position(initial, 0, (True,True), (True,True), 0, 0)
+    pos_Y = Position(initial, 0, (True,True), (True,True), 0, 0)
+    
+    #game limit is 100 turns or while the game has not ended
+    while count < 101 and not end:
+        pos_X, end, x_log_counter = play(pos_X, True, x_log_counter)
+        pos_Y, end, y_log_counter = play(pos_Y, False, y_log_counter)
+        count += 1
+              
 if __name__ == '__main__':
     main()
 

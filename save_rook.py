@@ -1,6 +1,7 @@
 class Rook:
-	def __init__(self, board, end):
+	def __init__(self, board, player, end):
 		self._board = board
+		self._player = player
 		self._position = end
 
 	def get_position(self):
@@ -11,24 +12,54 @@ class Rook:
 		board_piece_list = []
 		h_lower_limit, h_upper_limit = self.rook_hori_movement()
 
-		for i in range(h_lower_limit, h_upper_limit + 1):
-			if self._board.get_board_piece(i) != "." and self._board.get_board_piece(i) != " " \
-			and self._board.get_board_piece(i) != "\n" and self._board.get_board_piece(i) != "r":
-				board_piece_list.append(self._board.get_board_piece(i))
+		#if maximize, look for possible pieces to eliminate
+		if not self._player:
+			for i in range(h_lower_limit, h_upper_limit + 1):
+				if self._board.get_board_piece(i) != "." and self._board.get_board_piece(i) != " " \
+				and self._board.get_board_piece(i) != "\n" and self._board.get_board_piece(i) != "K" \
+				and self._board.get_board_piece(i) != "N" and self._board.get_board_piece(i) != "R":
+					board_piece_list.append(self._board.get_board_piece(i))
 			
 			
-		v_lower_limit, v_upper_limit = self.rook_vert_movement()
-		for i in range(v_lower_limit, v_upper_limit + 1, 10):
-			if self._board.get_board_piece(i) != "." and self._board.get_board_piece(i) != " " \
-			and self._board.get_board_piece(i) != "\n" and self._board.get_board_piece(i) != "r"\
-			and self._board.get_board_piece(i) != "R":	
-				board_piece_list.append(self._board.get_board_piece(i))
-				
-		if len(board_piece_list) > 0:
-			return board_piece_list
+			v_lower_limit, v_upper_limit = self.rook_vert_movement()
+			for i in range(v_lower_limit, v_upper_limit + 1, 10):
+				if self._board.get_board_piece(i) != "." and self._board.get_board_piece(i) != " " \
+				and self._board.get_board_piece(i) != "\n" and self._board.get_board_piece(i) != "K" \
+				and self._board.get_board_piece(i) != "N" and self._board.get_board_piece(i) != "R":
+					board_piece_list.append(self._board.get_board_piece(i))
+			
+			
+			if len(board_piece_list) > 0:
+				return board_piece_list
 					
+	
+			else:
+				return []
+
+		#if minimize, check if rook can attack your pieces		
 		else:
-			return []
+			for i in range(h_lower_limit, h_upper_limit + 1):
+				if self._board.get_board_piece(i) != "." and self._board.get_board_piece(i) != " " \
+				and self._board.get_board_piece(i) != "\n" and self._board.get_board_piece(i) != "k" \
+				and self._board.get_board_piece(i) != "n" and self._board.get_board_piece(i) != "r":
+					board_piece_list.append(self._board.get_board_piece(i))
+			
+
+
+			v_lower_limit, v_upper_limit = self.rook_vert_movement()
+			for i in range(v_lower_limit, v_upper_limit + 1, 10):
+				if self._board.get_board_piece(i) != "." and self._board.get_board_piece(i) != " " \
+				and self._board.get_board_piece(i) != "\n" and self._board.get_board_piece(i) != "k" \
+				and self._board.get_board_piece(i) != "n" and self._board.get_board_piece(i) != "r":
+					board_piece_list.append(self._board.get_board_piece(i))
+			
+			#print(board_piece_list)
+			if len(board_piece_list) > 0:
+				return board_piece_list
+					
+		
+			else:
+				return []
 
 		return None
 
@@ -69,18 +100,25 @@ class Rook:
 	def rook_safety(self):
 		#Check to see if king is safe from all possible moves your opponent can make
 		your_rook = self._position
+
+		#MAXIMIZE only
 		their_king = self._board.generic_find("k")
 		
 		if their_king is not None:
 			from .King import King
-			tk = King(self._board, their_king)
+			tk = King(self._board, not self._player, their_king)
+			#piece = tk.king_movement()
+			
 			if tk.king_movement().count("R") == 1:
 				return False
 		
 		their_knight = self._board.generic_find("n")
+		
 		if their_knight:
 			from .Knight import Knight
-			tn = Knight(self._board, their_knight)
+			tn = Knight(self._board, not self._player, their_knight)
+			#piece = tn.knight_movement()
+			
 			if tn.knight_movement().count("R") == 1:
 				return False
 		
@@ -90,14 +128,15 @@ class Rook:
 	def paired_move(self):
 		yk = self._board.generic_find("K")
 		from Pieces.King import King
-		your_king = King(self._board, yk)
+		your_king = King(self._board, not self._player, yk)
 		return your_king.increase_movement(self._position)
 	
 	#determine where the two-piece king is and use algorithm to determine how much space is left
 	#for the opponent king to move
-	def trap_king(self, king):
+	def trap_king(self):
 		space = 0
 		
+		their_king = self._board.generic_find("k")
 		their_knight = self._board.generic_find("n")
 		
 		hori_lower_limit, hori_upper_limit = self.rook_hori_movement()
@@ -106,8 +145,8 @@ class Rook:
 		h_axis_rook = self._position // 10
 		v_axis_rook = self._position % 10
 
-		h_axis_king = king // 10
-		v_axis_king = king % 10
+		h_axis_king = their_king // 10
+		v_axis_king = their_king % 10
 		
 		if h_axis_rook > h_axis_king and v_axis_rook > v_axis_king:
 			#use hori_lower and vert_lower
@@ -135,7 +174,7 @@ class Rook:
 			cut_board = (vert_lower_limit % 10)
 			
 			space -= (trim_board * cut_board)
-
+			
 			return 100 - space
 
 		elif h_axis_rook < h_axis_king and v_axis_rook > v_axis_king:
@@ -149,7 +188,7 @@ class Rook:
 			cut_board = (9 - vert_upper_limit % 10)
 			
 			space -= (trim_board * cut_board)
-
+			
 			return 100 - space
 
 		elif h_axis_rook < h_axis_king and v_axis_rook < v_axis_king:
@@ -163,17 +202,17 @@ class Rook:
 			cut_board = vert_upper_limit % 10
 			
 			space -= (trim_board * cut_board)
-
+			
 			return 100 - space
 	
 		else:
 			return 0
 	
 	#check how much space the opponent king has
-	def check_king_space(self, king, limit):
-		space = self.trap_king(king)
+	def check_king_space(self, limit):
+		space = self.trap_king()
 		
-		if (100 - space) < limit: 
+		if (100 - space) < limit: #and (100-space) > 2:
 			return True
 		
 		return False
@@ -183,5 +222,10 @@ class Rook:
 		your_king = self._board.generic_find("K")
 		
 		from Pieces.King import King
-		fake_rook_king = King(self._board, self._position)
-		return fake_rook_king.increase_movement(your_king)			
+		fake_rook_king = King(self._board, self._player, self._position)
+		return fake_rook_king.increase_movement(your_king)
+		
+		
+		
+			
+		
