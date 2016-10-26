@@ -1,11 +1,5 @@
 from Heuristic.heuristicX import heuristicX
 from Heuristic.heuristicY import heuristicY
-from sunfish import print_pos
-
-def print_score_and_pos(score, new_position):
-	print(score)
-	if new_position is not None:
-		print_pos(new_position)
 
 #evaluate function that calls a heuristic function
 #Note: a maximize player calls the mini side, so 

@@ -1,7 +1,6 @@
 from Pieces.Rook import Rook
 from Pieces.King import King
 from Pieces.Knight import Knight
-from sunfish import print_pos
 
 #heuristic for player X
 #position = configuration of chess board

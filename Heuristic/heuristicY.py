@@ -21,8 +21,7 @@ def heuristicY(position):
 	
 	if knight_index:
 		knight = Knight(position, knight_index)
-	else:
-		return -999
+	
 		
 	if max_rook_index:
 		max_rook = Rook(position,  max_rook_index)
@@ -49,8 +48,9 @@ def heuristicY(position):
 	if position.check_board():
 		return 99999
 	
-	if knight.knight_movement().count("r") == 1:
-		return 157
+	if knight_index:
+		if knight.knight_movement().count("r") == 1:
+			return 157
 	
 	if king.king_movement().count("r") == 1:
 		return 50 + (50 - abs(knight_index - max_rook_index))
@@ -58,6 +58,11 @@ def heuristicY(position):
 	if king_index % 10 == 5:
 		return 20 + (5 - abs(king_index // 10 - 5)) + (5- abs(knight_index - max_rook_index))
 	
-	return abs(knight_index % 10 - max_rook_index % 10) + abs(knight_index // 10 - max_rook_index // 10)\
-	+ (5- abs(king_index // 10 - 5))
+	if knight_index:
+		return abs(knight_index % 10 - max_rook_index % 10) + abs(knight_index // 10 - max_rook_index // 10)\
+		+ (5- abs(king_index // 10 - 5))
+
+	else:
+		return abs(king_index % 10 - rook_index % 10) + abs(king_index // 10 - rook_index // 10)
+	
 	
