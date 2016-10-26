@@ -591,7 +591,8 @@ def read_X(pos, text_count):
 
                 #make the move using the tuple
                 pos = pos.move(read_move)
-
+                pos = show(pos, read_move, True)
+                
                 #Save player X's move into player Y's log
                 with open("log_Y.txt", "a") as log_Y:
                     log_move = "X:{}:{}".format(piece, position)
@@ -633,7 +634,8 @@ def read_Y(pos, text_count):
                 
                 #make the move and rotate the board back
                 pos = pos.move(read_move)
-                pos = pos.rotate()
+                pos = show(pos, read_move, False)
+                #pos = pos.rotate()
 
 
                 #save the player Y's move into player X's log
@@ -671,12 +673,7 @@ def showMove(pos, who, move, text_count):
         #make the actual move
         pos = pos.move(move)
         
-        #render the move and print it
-        move_render = render(move[0]) + render(move[1])
-        print("PLAYER X: {}".format(move_render))
-        
-        #print the board
-        print_pos(pos)
+        pos = show(pos, move, player)
    
     #if min player
     else:
@@ -686,6 +683,20 @@ def showMove(pos, who, move, text_count):
         #make the actual move
         pos = pos.move(move)
         
+        pos = show(pos, move, player)
+        
+    return pos
+
+def show(pos, move, player):
+    if player:
+        #render the move and print it
+        move_render = render(move[0]) + render(move[1])
+        print("PLAYER X: {}".format(move_render))
+        
+        #print the board
+        print_pos(pos)
+
+    else:
         #render the move and print it
         move_render = render(119-move[0]) + render(119-move[1])
         print("PLAYER Y: {}".format(move_render))
@@ -693,9 +704,9 @@ def showMove(pos, who, move, text_count):
         #rotate the board back and print it
         pos = pos.rotate()
         print_pos(pos)
-        
+     
     return pos
-   
+
 #driver function to play the game
 #pos = position of the board
 #who = bool, True = max player, False = min player
@@ -728,6 +739,10 @@ def play(pos, who, text_count):
             print("PLAYER Y has won!")
             return pos, True, text_count
 
+        if score == -1000:
+            print("The game has ended in a draw.")
+            return pos, True, text_count
+        
         #call to make a move, save and show the move
         pos = showMove(pos, True, move, text_count)
         
@@ -755,12 +770,16 @@ def play(pos, who, text_count):
         #call minimax to determine the move
         score, move = minimax(pos, 1, False, player)
 
-        if score == -1001:
+        if score == -99999:
             config.TOTAL_PIECE -= 1
             
 		#This engine's check for player win
         if pos.score <= -MATE_LOWER:
             print("Player X has won!")
+            return pos, True, text_count
+        
+        if score == -1000:
+            print("The game has ended in a draw.")
             return pos, True, text_count
 
         #call to make a move, save and show the move
