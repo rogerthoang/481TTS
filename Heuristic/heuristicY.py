@@ -70,5 +70,5 @@ def heuristicY(position):
 			return abs(king_index // 10 - 5) + abs(king_index % 10 - 5)
 	
 	except:
-		pass
+		return 0
 	

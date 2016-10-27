@@ -131,4 +131,4 @@ def heuristicX(position):
 		return 0
 	
 	except:
-		pass
+		return 0
