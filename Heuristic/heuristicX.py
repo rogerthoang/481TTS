@@ -22,10 +22,8 @@ def heuristicX(position):
 		if rook_index:
 			rook = Rook(position,  rook_index)
 
-
 		if knight_index:
 			knight = Knight(position, knight_index)
-
 
 		if t_king_index:
 			their_king = King(position, t_king_index)
@@ -36,7 +34,7 @@ def heuristicX(position):
 		if king.king_movement().count("k") == 1 and king.king_safety():
 			return 99999
 
-		if rook_index:
+		if rook_index and king_index:
 			if rook.rook_piece_check().count("k") == 1 and rook.rook_safety() and not king.king_safety()\
 			and king.king_movement().count("k") != 1:
 				return 999
@@ -130,5 +128,10 @@ def heuristicX(position):
 
 		return 0
 	
-	except:
-		return 0
+	except Exception as error:
+		with open("error.txt", "a") as e:
+			e.write(str(error) + "\n")
+			
+		return 1
+		
+	

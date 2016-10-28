@@ -17,12 +17,9 @@ def heuristicY(position):
 
 		if king_index:
 			king = King(position,  king_index)
-		else:
-			return -99999
 
 		if knight_index:
 			knight = Knight(position, knight_index)
-
 
 		if max_rook_index:
 			max_rook = Rook(position,  max_rook_index)
@@ -33,9 +30,6 @@ def heuristicY(position):
 
 		if max_knight_index:
 			max_knight = Knight(position,  max_knight_index)
-		else:
-			max_knight = None
-
 
 		#check for king's safety, if this position is poor return a low value
 		if not king.king_safety():
@@ -53,11 +47,17 @@ def heuristicY(position):
 			if knight.knight_movement().count("r") == 1:
 				return 157
 
-		if king.king_movement().count("r") == 1 and knight_index:
-			return 50 + (50 - abs(knight_index - max_rook_index))
+		if king_index and knight_index and max_rook_index:
+			if king.king_movement().count("r") == 1:
+				return 50 + (50 - abs(knight_index - max_rook_index))
 
-		if king_index % 10 == 5 and knight_index and max_rook_index:
-			return 20 + (5 - abs(king_index // 10 - 5)) + (5- abs(knight_index - max_rook_index))
+		if king_index // 10 == 4 or king_index // 10 == 5:
+			return 30 + (50 - abs(knight_index - max_rook_index))
+
+		if knight_index and max_rook_index and king_index:
+			if king_index % 10 == 5 or king_index % 10 == 6:
+				return 20 + (5 - abs(king_index // 10 - 5)) + (5 - abs(knight_index - max_rook_index))\
+				+ (5 - abs(king_index % 10 - 5))
 
 		if knight_index and max_rook_index:
 			return abs(knight_index % 10 - max_rook_index % 10) + abs(knight_index // 10 - max_rook_index // 10)\
@@ -68,7 +68,11 @@ def heuristicY(position):
 
 		else:
 			return abs(king_index // 10 - 5) + abs(king_index % 10 - 5)
-	
-	except:
-		return 0
+
+	except Exception as error:
+		with open("error.txt", "a") as e:
+			e.write(str(error) + "\n")
+			
+		return 1
+		
 	

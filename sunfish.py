@@ -6,7 +6,7 @@ import re, sys, time
 from itertools import count
 from collections import OrderedDict, namedtuple
 from MiniMax.minimax import *
-import config
+import pc
 import os
 import time
 
@@ -280,7 +280,7 @@ class Position(namedtuple('Position', 'board score wc bc ep kp')):
     #config.TOTAL_PIECE is a global variable stored in config.py that tracks the total amount
     #of pieces on the board
     def check_board(self):
-        piece_count = config.TOTAL_PIECE
+        piece_count = pc.TOTAL_PIECE
         
         count = 0
         for i in range(21, 99):
@@ -714,7 +714,6 @@ def show(pos, move, player):
 #returns the position after the move of the player, false for game not ended and the log counter
 def play(pos, who, text_count):
     player = who
-
     if player:
         #Max player's move
         if pos.find_board_piece("k") == None:
@@ -730,9 +729,9 @@ def play(pos, who, text_count):
 
         #given the current position, a depth, whos turn and checkmate, try to use minimax
         score, move = minimax(pos, 1, True, player)
-
+       
         if score == 99999:
-            config.TOTAL_PIECE -= 1
+            pc.TOTAL_PIECE -= 1
 
         #engine check for player win    
         if pos.score <= -MATE_LOWER:
@@ -769,9 +768,9 @@ def play(pos, who, text_count):
         
         #call minimax to determine the move
         score, move = minimax(pos, 1, False, player)
-
+        
         if score == -99999:
-            config.TOTAL_PIECE -= 1
+            pc.TOTAL_PIECE -= 1
             
 		#This engine's check for player win
         if pos.score <= -MATE_LOWER:
