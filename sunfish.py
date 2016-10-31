@@ -571,7 +571,7 @@ def read_X(pos, text_count):
     t = os.path.getmtime("log_X.txt")
     while True:
         if t != os.path.getmtime("log_X.txt"):
-            time.sleep(0.5)
+            time.sleep(12)
             with open("log_X.txt", "r") as log_X:
                 for i in range(0, text_count):
                     info = log_X.readline()
@@ -611,7 +611,7 @@ def read_Y(pos, text_count):
     t = os.path.getmtime("log_Y.txt")
     while True:
         if t != os.path.getmtime("log_Y.txt"):
-            time.sleep(0.5)
+            time.sleep(12)
             with open("log_Y.txt", "r") as log_Y:
                 for i in range(0, text_count):
                     info = log_Y.readline()
