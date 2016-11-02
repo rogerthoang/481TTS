@@ -9,6 +9,7 @@ from MiniMax.minimax import *
 import pc
 import os
 import time
+from lockfile import LockFile
 
 
 # The table size is the maximum number of elements in the transposition table.
@@ -561,100 +562,114 @@ def save_X(pos, move, text_count):
     log_move = "X:{}:{}".format(pos.get_board_piece(move[0]), render(move[1]))
     test = render(move[1])
  
+    lock = LockFile("log_X.txt")
+    lock.acquire()
     with open("log_X.txt", "a") as log_X:
         log_X.write(str(text_count) + " " + log_move + "\n")
+    lock.release()
 
 #Player Y reads player X's move and saves it to their log
 #It also makes the move that it read from player X
 #returns the position after moving player X and text count
-def read_X(pos, text_count):
-    t = os.path.getmtime("log_X.txt")
+def read_X(pos, text_count, lines):
+    t = lines
     while True:
-        if t != os.path.getmtime("log_X.txt"):
-            time.sleep(12)
+        if os.path.exists("log_X.txt.lock") == False:
             with open("log_X.txt", "r") as log_X:
-                for i in range(0, text_count):
-                    info = log_X.readline()
-
-                #find the semicolons that seperate the needed elements
-                first_semi = info.find(":")
-                second_semi = info.find(":", first_semi +1)
-
-                #gather the piece and index of the move
-                piece = info[first_semi + 1:second_semi].strip()
-                position = info[second_semi + 1:].strip()
-
-                #get the index of the piece and revert the chess move to an index and make a tuple
-                start_index = pos.find_board_piece(piece)
-                end_index = parse(position)
-                read_move = (start_index, end_index)
-
-                #make the move using the tuple
-                pos = pos.move(read_move)
-                pos = show(pos, read_move, True)
+                l = len(log_X.readlines())
+                log_X.seek(0)
                 
-                #Save player X's move into player Y's log
-                with open("log_Y.txt", "a") as log_Y:
-                    log_move = "X:{}:{}".format(piece, position)
-                    log_Y.write(str(text_count) + " " + log_move + "\n")
-                
-            break
+                if t != l:
+                    time.sleep(12)
+                    for i in range(0, text_count):
+                        info = log_X.readline()
+
+                    #find the semicolons that seperate the needed elements
+                    first_semi = info.find(":")
+                    second_semi = info.find(":", first_semi +1)
+
+                    #gather the piece and index of the move
+                    piece = info[first_semi + 1:second_semi].strip()
+                    position = info[second_semi + 1:].strip()
+
+                    #get the index of the piece and revert the chess move to an index and make a tuple
+                    start_index = pos.find_board_piece(piece)
+                    end_index = parse(position)
+                    read_move = (start_index, end_index)
+                    
+                    
+                    #make the move using the tuple
+                    pos = pos.move(read_move)
+                    pos = show(pos, read_move, True)
+
+                    #Save player X's move into player Y's log
+                    with open("log_Y.txt", "a") as log_Y:
+                        log_move = "X:{}:{}".format(piece, position)
+                        log_Y.write(str(text_count) + " " + log_move + "\n")
+
+                    break
     
+    lines = l
     text_count += 1
     
-    return pos, text_count
+    return pos, text_count, lines
         
 #Player X reads player Y's move and saves it to their log
 #It also makes the move that it read from player Y
 #returns the position after moving player Y and the log counter
-def read_Y(pos, text_count):
-    t = os.path.getmtime("log_Y.txt")
+def read_Y(pos, text_count, lines):
+    t = lines
     while True:
-        if t != os.path.getmtime("log_Y.txt"):
-            time.sleep(12)
+        if os.path.exists("log_Y.txt.lock") == False:    
             with open("log_Y.txt", "r") as log_Y:
-                for i in range(0, text_count):
-                    info = log_Y.readline()
+                x = len(log_Y.readlines())
+                log_Y.seek(0)
+                if t != x:
+                    time.sleep(12)
+                    for i in range(0, text_count):
+                        info = log_Y.readline()
 
-                #rotate the board to make the proper move
-                pos = pos.rotate()
+                    #rotate the board to make the proper move
+                    pos = pos.rotate()
 
-                #find the semicolons that seperate the needed elements
-                first_semi = info.find(":")
-                second_semi = info.find(":", first_semi +1)
+                    #find the semicolons that seperate the needed elements
+                    first_semi = info.find(":")
+                    second_semi = info.find(":", first_semi +1)
 
-                #gather the information
-                piece = info[first_semi + 1:second_semi].strip()
-                position = info[second_semi + 1:].strip()
-                
-                #turn the chess piece into an index and reverse the index to get a tuple
-                start_index = pos.find_board_piece(piece)
-                end_index = 119 - parse(position)
-                read_move = (start_index, end_index)
-                
-                #make the move and rotate the board back
-                pos = pos.move(read_move)
-                pos = show(pos, read_move, False)
-                #pos = pos.rotate()
+                    #gather the information
+                    piece = info[first_semi + 1:second_semi].strip()
+                    position = info[second_semi + 1:].strip()
+
+                    #turn the chess piece into an index and reverse the index to get a tuple
+                    start_index = pos.find_board_piece(piece)
+                    end_index = 119 - parse(position)
+                    read_move = (start_index, end_index)
+
+                    #make the move and rotate the board back
+                    pos = pos.move(read_move)
+                    pos = show(pos, read_move, False)
+                    #pos = pos.rotate()
 
 
-                #save the player Y's move into player X's log
-                with open("log_X.txt", "a") as log_X:
-                    log_move = "Y:{}:{}".format(piece, position)
-                    log_X.write(str(text_count) + " " + log_move + "\n")
-                    
-            break
-    
+                    #save the player Y's move into player X's log
+                    with open("log_X.txt", "a") as log_X:
+                        log_move = "Y:{}:{}".format(piece, position)
+                        log_X.write(str(text_count) + " " + log_move + "\n")
+
+                    break
+    lines = x
     text_count += 1
             
-    return pos, text_count
+    return pos, text_count, lines
 
 #function used to save Y's move to their log
 def save_Y(pos, move, text_count):
     log_move = "Y:{}:{}".format(pos.get_board_piece(move[0]), render(119-move[1]))
-          
+    lock = LockFile("log_Y.txt")
+    lock.acquire()
     with open("log_Y.txt", "a") as log_Y:
         log_Y.write(str(text_count) + " " + log_move + "\n")
+    lock.release()
 
 #function used to make the move, save the move to log and print the move
 #pos = position of the board
@@ -712,7 +727,7 @@ def show(pos, move, player):
 #who = bool, True = max player, False = min player
 #text_count = counter for logs
 #returns the position after the move of the player, false for game not ended and the log counter
-def play(pos, who, text_count):
+def play(pos, who, text_count, lines):
     player = who
     if player:
         #Max player's move
@@ -725,7 +740,7 @@ def play(pos, who, text_count):
             return pos, True, text_count
         
         if text_count > 1:
-            pos, text_count = read_Y(pos, text_count)
+            pos, text_count, lines = read_Y(pos, text_count, lines)
 
         #given the current position, a depth, whos turn and checkmate, try to use minimax
         score, move = minimax(pos, 1, True, player)
@@ -761,7 +776,7 @@ def play(pos, who, text_count):
        
         
         #Minimizing PLAYER MOVE
-        pos, text_count = read_X(pos, text_count)
+        pos, text_count, lines = read_X(pos, text_count, lines)
     
         #rotate board for library to work properly
         pos = pos.rotate()
@@ -786,7 +801,7 @@ def play(pos, who, text_count):
         
         text_count += 1
         
-    return pos, False, text_count
+    return pos, False, text_count, lines
 
 def main():
     #initialize the various variables needed

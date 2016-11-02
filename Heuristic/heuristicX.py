@@ -125,8 +125,9 @@ def heuristicX(position):
 			if rook_index // 10 == 8 and king_index // 10 == 9\
 			and knight_index // 10 == 9:
 				return 10
-
-		return 0
+		
+		if rook_index:
+			return 4 - abs(rook_index // 10 - king_index // 10) + 4 - abs(rook_index % 10 - king_index % 10)
 	
 	except Exception as error:
 		with open("error.txt", "a") as e:
